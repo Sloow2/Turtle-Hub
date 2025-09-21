@@ -1,1 +1,117 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/Sloow2/Turtle-Hub/refs/heads/main/Games/Steal-A-Brainrot"))()
+loadstring([[
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
+local Window = WindUI:CreateWindow({
+    Title = "Turtle hub - SAB",
+    Icon = "bird",  -- Changed icon to "Bird"
+    Folder = "MySuperHub",
+    Size = UDim2.fromOffset(580, 460),
+    MinSize = Vector2.new(560, 350),
+    MaxSize = Vector2.new(850, 560),
+    Transparent = true,
+    Theme = "Dark",
+    Resizable = true,
+    SideBarWidth = 200,
+    BackgroundImageTransparency = 0.42,
+    HideSearchBar = true,
+    ScrollBarEnabled = false,
+    AutoShow = true
+})
+
+-- Create the "Player" tab
+local PlayerTab = Window:Tab({
+    Title = "Player",
+    Icon = "user",  -- You can change this to another icon as well
+    Locked = false
+})
+
+-- Walkspeed Slider inside "Player" tab
+PlayerTab:Slider({
+    Title = "Walkspeed",
+    Step = 1,  -- Steps in integer, e.g., 1
+    Value = {
+        Min = 16,  -- Minimum Walkspeed
+        Max = 25,  -- Maximum Walkspeed
+        Default = 16,  -- Default Walkspeed (e.g., 50)
+    },
+    Callback = function(value)
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if character and character:FindFirstChild("Humanoid") then
+            -- Set player's walkspeed to the value from the slider
+            character.Humanoid.WalkSpeed = value
+            print("Walkspeed set to: " .. value)
+        end
+    end
+})
+
+-- Gravity Slider inside "Player" tab
+PlayerTab:Slider({
+    Title = "Gravity",
+    Step = 1,  -- Steps in integer, e.g., 1
+    Value = {
+        Min = 0,  -- Minimum Gravity (0 for no gravity)
+        Max = 200, -- Maximum Gravity (set to 200)
+        Default = 196.2,  -- Default Gravity (normal gravity in Roblox)
+    },
+    Callback = function(value)
+        -- Adjust the gravity of the workspace based on the slider value
+        workspace.Gravity = value
+        print("Gravity set to: " .. value)
+    end
+})
+
+-- Create the "Helper" tab with "Float" option
+local HelperTab = Window:Tab({
+    Title = "Helper",
+    Icon = "tools",  -- You can change this to another icon
+    Locked = false
+})
+
+local floatEnabled = false
+local floatPart = nil
+
+-- Float button inside the "Helper" tab
+HelperTab:Button({
+    Title = "Float",  -- Button text
+    Description = "Enable float effect and create a floating part",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if character then
+            -- Toggle the float effect
+            if floatEnabled then
+                -- Disable floating
+                floatEnabled = false
+                if floatPart then
+                    floatPart:Destroy()
+                    floatPart = nil
+                end
+                print("Float effect disabled.")
+            else
+                -- Enable floating
+                floatEnabled = true
+                -- Create a studded part under the player to simulate floating
+                floatPart = Instance.new("Part")
+                floatPart.Size = Vector3.new(2, 1, 2)  -- Size of the part
+                floatPart.Shape = Enum.PartType.Ball  -- You can change this to another shape
+                floatPart.Anchored = true
+                floatPart.CanCollide = false
+                floatPart.BrickColor = BrickColor.new("Bright blue")  -- Change color to match image
+                floatPart.Position = character.HumanoidRootPart.Position - Vector3.new(0, 2, 0)  -- Position under the character
+                floatPart.Parent = workspace
+                
+                -- Make the part float upwards continuously
+                game:GetService("RunService").Heartbeat:Connect(function()
+                    if floatEnabled and character and character:FindFirstChild("HumanoidRootPart") then
+                        -- Move the part upwards
+                        floatPart.Position = floatPart.Position + Vector3.new(0, 0.1, 0)
+                    end
+                end)
+                print("Float effect enabled.")
+            end
+        end
+    end
+})
+
+]])()
