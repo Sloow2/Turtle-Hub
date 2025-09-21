@@ -61,6 +61,26 @@ PlayerTab:Slider({
     end
 })
 
+-- JumpPower Slider inside "Player" tab
+PlayerTab:Slider({
+    Title = "JumpPower",
+    Step = 1,  -- Steps in integer, e.g., 1
+    Value = {
+        Min = 50,  -- Minimum JumpPower (default in Roblox is 50)
+        Max = 150, -- Maximum JumpPower (can be adjusted)
+        Default = 50,  -- Default JumpPower
+    },
+    Callback = function(value)
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if character and character:FindFirstChild("Humanoid") then
+            -- Set the player's JumpPower to the value from the slider
+            character.Humanoid.JumpPower = value
+            print("JumpPower set to: " .. value)
+        end
+    end
+})
+
 -- Create the "Helper" tab with "Float" option
 local HelperTab = Window:Tab({
     Title = "Helper",
@@ -70,48 +90,79 @@ local HelperTab = Window:Tab({
 
 local floatEnabled = false
 local floatPart = nil
+local flying = false
 
--- Float button inside the "Helper" tab
-HelperTab:Button({
-    Title = "Float",  -- Button text
-    Description = "Enable float effect and create a floating part",
-    Callback = function()
+-- Function to create the floating part
+local function createFloatPart()
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+
+    if hrp then
+        floatPart = Instance.new("Part")
+        floatPart.Size = Vector3.new(4, 1, 4)  -- Reduced the size of the part to be more appropriate
+        floatPart.Anchored = true
+        floatPart.CanCollide = true  -- Enable collision so you can stand on it
+        floatPart.Material = Enum.Material.Neon
+        floatPart.Color = Color3.fromRGB(0, 0, 255)  -- Color of the part
+        floatPart.Position = hrp.Position - Vector3.new(0, hrp.Size.Y / 2 + floatPart.Size.Y / 2, 0)  -- Position below the player
+        floatPart.Parent = workspace
+    end
+end
+
+-- Function to disable the floating part
+local function disableFloat()
+    if floatPart then
+        floatPart:Destroy()
+        floatPart = nil
+    end
+    flying = false
+end
+
+-- Toggle button for Float effect
+HelperTab:Toggle({
+    Title = "Float",  -- Toggle text
+    Desc = "Enable/Disable the float effect",
+    Icon = "circle",  -- Icon for the toggle
+    Type = "Checkbox",  -- Type of the toggle
+    Default = false,  -- Default state is off
+    Callback = function(state)
         local player = game.Players.LocalPlayer
         local character = player.Character
         if character then
-            -- Toggle the float effect
-            if floatEnabled then
-                -- Disable floating
-                floatEnabled = false
-                if floatPart then
-                    floatPart:Destroy()
-                    floatPart = nil
+            if state then
+                -- Enable the floating part and modify jump power
+                if not floatPart then
+                    createFloatPart()
                 end
-                print("Float effect disabled.")
-            else
-                -- Enable floating
-                floatEnabled = true
-                -- Create a studded part under the player to simulate floating
-                floatPart = Instance.new("Part")
-                floatPart.Size = Vector3.new(2, 1, 2)  -- Size of the part
-                floatPart.Shape = Enum.PartType.Ball  -- You can change this to another shape
-                floatPart.Anchored = true
-                floatPart.CanCollide = false
-                floatPart.BrickColor = BrickColor.new("Bright blue")  -- Change color to match image
-                floatPart.Position = character.HumanoidRootPart.Position - Vector3.new(0, 2, 0)  -- Position under the character
-                floatPart.Parent = workspace
-                
-                -- Make the part float upwards continuously
-                game:GetService("RunService").Heartbeat:Connect(function()
-                    if floatEnabled and character and character:FindFirstChild("HumanoidRootPart") then
-                        -- Move the part upwards
-                        floatPart.Position = floatPart.Position + Vector3.new(0, 0.1, 0)
-                    end
-                end)
+                -- Increase JumpPower while floating
+                character.Humanoid.JumpPower = 100  -- Modify this value as needed
+                flying = true
                 print("Float effect enabled.")
+            else
+                -- Disable the float and revert jump power
+                disableFloat()
+                character.Humanoid.JumpPower = 50  -- Reset to default JumpPower value
+                flying = false
+                print("Float effect disabled.")
             end
         end
     end
 })
+
+-- Update the position of the floating part and make it rise very slowly
+game:GetService("RunService").Heartbeat:Connect(function(dt)
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    local hrp = character and character:FindFirstChild("HumanoidRootPart")
+
+    if flying and floatPart and hrp then
+        -- Make the floating part follow the player's HumanoidRootPart very slowly
+        local targetPosition = hrp.Position - Vector3.new(0, hrp.Size.Y / 2 + floatPart.Size.Y / 2, 0)
+        floatPart.Position = floatPart.Position:Lerp(targetPosition, 0.05)  -- Slower horizontal movement
+        -- Slow the rising speed of the part even more by adjusting the value
+        floatPart.Position = floatPart.Position + Vector3.new(0, 0.02, 0)  -- Slow vertical rise
+    end
+end)
 
 ]])()
